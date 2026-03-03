@@ -1,6 +1,7 @@
 from processes import load_processes
 
 
+
 def run_fcfs():
     print("\n===== FCFS Simulation =====")
 
@@ -14,15 +15,7 @@ def run_fcfs():
 
     while True:
 
-        # Update I/O
-        for p in io_list[:]:
-            p.remaining_time -= 1
-            if p.remaining_time == 0:
-                p.move_to_next_burst()
-                ready_queue.append(p)
-                io_list.remove(p)
-
-        # Schedule if CPU idle
+        # 1️⃣ Schedule if CPU idle
         if running is None and ready_queue:
             running = ready_queue.pop(0)
 
@@ -31,25 +24,37 @@ def run_fcfs():
 
             print(f"Time {current_time}: {running.pid} scheduled")
 
-        # Run CPU
+        # 2️⃣ Increment waiting time (only those already waiting)
+        for p in ready_queue:
+            p.waiting_time += 1
+
+        # 3️⃣ Run CPU for 1 unit
         if running:
             running.remaining_time -= 1
             cpu_busy_time += 1
 
-            if running.remaining_time == 0:
-                running.move_to_next_burst()
+        # 4️⃣ Decrement I/O timers
+        for p in io_list:
+            p.remaining_time -= 1
 
-                if running.completed:
-                    running.turnaround_time = current_time + 1
-                    print(f"Time {current_time+1}: {running.pid} COMPLETED")
-                else:
-                    io_list.append(running)
+        # 5️⃣ Handle CPU completion
+        if running and running.remaining_time == 0:
+            running.move_to_next_burst()
 
-                running = None
+            if running.completed:
+                running.turnaround_time = current_time + 1
+                print(f"Time {current_time+1}: {running.pid} COMPLETED")
+            else:
+                io_list.append(running)
 
-        # Update waiting times
-        for p in ready_queue:
-            p.waiting_time += 1
+            running = None
+
+        # 6️⃣ Move completed I/O back to ready queue
+        for p in io_list[:]:
+            if p.remaining_time == 0:
+                p.move_to_next_burst()
+                ready_queue.append(p)
+                io_list.remove(p)
 
         current_time += 1
 
