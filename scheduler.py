@@ -1,7 +1,5 @@
 from processes import load_processes
 
-
-
 def run_fcfs():
     print("\n===== FCFS Simulation =====")
 
@@ -15,41 +13,65 @@ def run_fcfs():
 
     while True:
 
-        # 1️⃣ Schedule if CPU idle
+        # Schedule if CPU idle
         if running is None and ready_queue:
             running = ready_queue.pop(0)
 
             if running.response_time is None:
                 running.response_time = current_time
 
-            print(f"Time {current_time}: {running.pid} scheduled")
+            # ---- Required Dynamic Output ----
+            print("\n----------------------------------------")
+            print(f"Current Time: {current_time}")
+            print(f"Running Process: {running.pid}")
 
-        # 2️⃣ Increment waiting time (only those already waiting)
+            if ready_queue:
+                print("Ready Queue: ", end="")
+                print(", ".join(
+                    f"{p.pid}({p.remaining_time})" for p in ready_queue
+                ))
+            else:
+                print("Ready Queue: EMPTY")
+
+            if io_list:
+                print("I/O List: ", end="")
+                print(", ".join(
+                    f"{p.pid}({p.remaining_time})" for p in io_list
+                ))
+            else:
+                print("I/O List: EMPTY")
+
+            print("----------------------------------------")
+
+        # Increment waiting time
         for p in ready_queue:
             p.waiting_time += 1
 
-        # 3️⃣ Run CPU for 1 unit
+        # Run CPU
         if running:
             running.remaining_time -= 1
             cpu_busy_time += 1
 
-        # 4️⃣ Decrement I/O timers
+        # Decrement I/O timers
         for p in io_list:
             p.remaining_time -= 1
 
-        # 5️⃣ Handle CPU completion
+        # Handle CPU completion
         if running and running.remaining_time == 0:
             running.move_to_next_burst()
 
             if running.completed:
                 running.turnaround_time = current_time + 1
-                print(f"Time {current_time+1}: {running.pid} COMPLETED")
+
+                print("\n*** PROCESS COMPLETED ***")
+                print(f"Time {current_time+1}: {running.pid} has completed execution.")
+                print("**************************")
             else:
                 io_list.append(running)
 
             running = None
 
-        # 6️⃣ Move completed I/O back to ready queue
+        # Move completed I/O back to ready queue
         for p in io_list[:]:
             if p.remaining_time == 0:
                 p.move_to_next_burst()
@@ -65,7 +87,7 @@ def run_fcfs():
 
 
 def print_results(processes, total_time, cpu_busy_time):
-    print("\nFinal Results:")
+    print("\n===== FINAL RESULTS =====")
 
     total_wait = 0
     total_turnaround = 0
@@ -76,16 +98,18 @@ def print_results(processes, total_time, cpu_busy_time):
         total_turnaround += p.turnaround_time
         total_response += p.response_time
 
-        print(f"{p.pid}: Tw={p.waiting_time}, "
-              f"Ttr={p.turnaround_time}, "
-              f"Tr={p.response_time}")
+        print(f"{p.pid}: "
+              f"Waiting={p.waiting_time}, "
+              f"Turnaround={p.turnaround_time}, "
+              f"Response={p.response_time}")
 
     n = len(processes)
 
-    print("\nAverages:")
+    print("\n===== AVERAGES =====")
+    print("Total completion time:", total_time)
     print("CPU Utilization: {:.2f}%".format(
         (cpu_busy_time / total_time) * 100
     ))
-    print("Avg Waiting Time:", total_wait / n)
-    print("Avg Turnaround Time:", total_turnaround / n)
-    print("Avg Response Time:", total_response / n)
+    print("Average Waiting Time:", total_wait / n)
+    print("Average Turnaround Time:", total_turnaround / n)
+    print("Average Response Time:", total_response / n)
