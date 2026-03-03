@@ -82,10 +82,17 @@ def run_sjf():
 
     while True:
 
-        # Schedule if CPU idle
+        # 1️⃣ Move completed I/O to ready queue FIRST
+        for p in io_list[:]:
+            if p.remaining_time == 0:
+                p.move_to_next_burst()
+                ready_queue.append(p)
+                io_list.remove(p)
+
+        # 2️⃣ Schedule if CPU idle
         if running is None and ready_queue:
 
-            # Sort by shortest CPU burst
+            # Sort by shortest next CPU burst
             ready_queue.sort(key=lambda p: p.remaining_time)
 
             running = ready_queue.pop(0)
@@ -95,20 +102,20 @@ def run_sjf():
 
             print_dynamic_state(current_time, running, ready_queue, io_list)
 
-        # Increment waiting time
+        # 3️⃣ Increment waiting time
         for p in ready_queue:
             p.waiting_time += 1
 
-        # Run CPU
+        # 4️⃣ Run CPU
         if running:
             running.remaining_time -= 1
             cpu_busy_time += 1
 
-        # Decrement I/O timers
+        # 5️⃣ Decrement I/O timers
         for p in io_list:
             p.remaining_time -= 1
 
-        # Handle CPU completion
+        # 6️⃣ Handle CPU completion
         if running and running.remaining_time == 0:
             running.move_to_next_burst()
 
@@ -120,15 +127,10 @@ def run_sjf():
 
             running = None
 
-        # Move completed I/O back to ready queue
-        for p in io_list[:]:
-            if p.remaining_time == 0:
-                p.move_to_next_burst()
-                ready_queue.append(p)
-                io_list.remove(p)
-
+        # 7️⃣ Advance time
         current_time += 1
 
+        # 8️⃣ Exit condition
         if all(p.completed for p in processes):
             break
 
