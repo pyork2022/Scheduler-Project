@@ -82,14 +82,14 @@ def run_sjf():
 
     while True:
 
-        # 1️⃣ Move completed I/O to ready queue FIRST
+        # Move completed I/O to ready queue FIRST
         for p in io_list[:]:
             if p.remaining_time == 0:
                 p.move_to_next_burst()
                 ready_queue.append(p)
                 io_list.remove(p)
 
-        # 2️⃣ Schedule if CPU idle
+        # Schedule if CPU idle
         if running is None and ready_queue:
 
             # Sort by shortest next CPU burst
@@ -102,20 +102,20 @@ def run_sjf():
 
             print_dynamic_state(current_time, running, ready_queue, io_list)
 
-        # 3️⃣ Increment waiting time
+        # Increment waiting time
         for p in ready_queue:
             p.waiting_time += 1
 
-        # 4️⃣ Run CPU
+        # Run CPU
         if running:
             running.remaining_time -= 1
             cpu_busy_time += 1
 
-        # 5️⃣ Decrement I/O timers
+        # Decrement I/O timers
         for p in io_list:
             p.remaining_time -= 1
 
-        # 6️⃣ Handle CPU completion
+        # Handle CPU completion
         if running and running.remaining_time == 0:
             running.move_to_next_burst()
 
@@ -127,10 +127,10 @@ def run_sjf():
 
             running = None
 
-        # 7️⃣ Advance time
+        # Advance time
         current_time += 1
 
-        # 8️⃣ Exit condition
+        # Exit condition
         if all(p.completed for p in processes):
             break
 
@@ -161,7 +161,7 @@ def run_mlfq():
 
     while True:
 
-        # 1️⃣ Move completed I/O back to appropriate queue
+        # Move completed I/O back to appropriate queue
         for p in io_list[:]:
             if p.remaining_time == 0:
                 p.move_to_next_burst()
@@ -176,7 +176,7 @@ def run_mlfq():
 
                 io_list.remove(p)
 
-        # 2️⃣ Preemption check (higher priority arrival)
+        # Preemption check (higher priority arrival)
         if running:
             if running.queue_level > 1 and q1:
                 # Preempt to q2 or q3 front
@@ -192,7 +192,7 @@ def run_mlfq():
                 running = None
                 time_slice = 0
 
-        # 3️⃣ Schedule if CPU idle
+        # Schedule if CPU idle
         if running is None:
 
             if q1:
@@ -221,21 +221,21 @@ def run_mlfq():
                     io_list
                 )
 
-        # 4️⃣ Increment waiting time
+        # Increment waiting time
         for p in (q1 + q2 + q3):
             p.waiting_time += 1
 
-        # 5️⃣ Run CPU
+        # Run CPU
         if running:
             running.remaining_time -= 1
             cpu_busy_time += 1
             time_slice -= 1
 
-        # 6️⃣ Decrement I/O timers
+        # Decrement I/O timers
         for p in io_list:
             p.remaining_time -= 1
 
-        # 7️⃣ CPU Burst Finished
+        # CPU Burst Finished
         if running and running.remaining_time == 0:
 
             running.move_to_next_burst()
@@ -249,7 +249,7 @@ def run_mlfq():
             running = None
             time_slice = 0
 
-        # 8️⃣ Time slice expired (demotion)
+        # Time slice expired (demotion)
         elif running and time_slice == 0:
 
             if running.queue_level == 1:
