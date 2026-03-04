@@ -136,6 +136,140 @@ def run_sjf():
 
     print_results(processes, current_time, cpu_busy_time)
 
+# =========================
+# MLFQ (3-Level)
+# =========================
+def run_mlfq():
+    print("\n===== MLFQ Simulation =====")
+
+    processes = load_processes()
+
+    # Three queues
+    q1 = processes[:]   # Highest priority
+    q2 = []
+    q3 = []
+
+    io_list = []
+
+    Q1 = 5
+    Q2 = 10
+
+    current_time = 0
+    cpu_busy_time = 0
+    running = None
+    time_slice = 0
+
+    while True:
+
+        # 1️⃣ Move completed I/O back to appropriate queue
+        for p in io_list[:]:
+            if p.remaining_time == 0:
+                p.move_to_next_burst()
+                p.queue_level = getattr(p, "queue_level", 1)
+
+                if p.queue_level == 1:
+                    q1.append(p)
+                elif p.queue_level == 2:
+                    q2.append(p)
+                else:
+                    q3.append(p)
+
+                io_list.remove(p)
+
+        # 2️⃣ Preemption check (higher priority arrival)
+        if running:
+            if running.queue_level > 1 and q1:
+                # Preempt to q2 or q3 front
+                if running.queue_level == 2:
+                    q2.insert(0, running)
+                else:
+                    q3.insert(0, running)
+                running = None
+                time_slice = 0
+
+            elif running.queue_level == 3 and q2:
+                q3.insert(0, running)
+                running = None
+                time_slice = 0
+
+        # 3️⃣ Schedule if CPU idle
+        if running is None:
+
+            if q1:
+                running = q1.pop(0)
+                running.queue_level = 1
+                time_slice = Q1
+
+            elif q2:
+                running = q2.pop(0)
+                running.queue_level = 2
+                time_slice = Q2
+
+            elif q3:
+                running = q3.pop(0)
+                running.queue_level = 3
+                time_slice = float('inf')
+
+            if running:
+                if running.response_time is None:
+                    running.response_time = current_time
+
+                print_dynamic_state(
+                    current_time,
+                    running,
+                    q1 + q2 + q3,
+                    io_list
+                )
+
+        # 4️⃣ Increment waiting time
+        for p in (q1 + q2 + q3):
+            p.waiting_time += 1
+
+        # 5️⃣ Run CPU
+        if running:
+            running.remaining_time -= 1
+            cpu_busy_time += 1
+            time_slice -= 1
+
+        # 6️⃣ Decrement I/O timers
+        for p in io_list:
+            p.remaining_time -= 1
+
+        # 7️⃣ CPU Burst Finished
+        if running and running.remaining_time == 0:
+
+            running.move_to_next_burst()
+
+            if running.completed:
+                running.turnaround_time = current_time + 1
+                print(f"\nTime {current_time+1}: {running.pid} COMPLETED")
+            else:
+                io_list.append(running)
+
+            running = None
+            time_slice = 0
+
+        # 8️⃣ Time slice expired (demotion)
+        elif running and time_slice == 0:
+
+            if running.queue_level == 1:
+                running.queue_level = 2
+                q2.append(running)
+            elif running.queue_level == 2:
+                running.queue_level = 3
+                q3.append(running)
+            else:
+                q3.append(running)
+
+            running = None
+
+        current_time += 1
+
+        if all(p.completed for p in processes):
+            break
+
+    print_results(processes, current_time, cpu_busy_time)
+
 
 # =========================
 # Shared Dynamic Print
