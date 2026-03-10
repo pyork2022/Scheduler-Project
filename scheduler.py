@@ -1,9 +1,7 @@
 from processes import load_processes
 
-
-# =========================
 # FCFS
-# =========================
+
 def run_fcfs():
     print("\n===== FCFS Simulation =====")
 
@@ -66,9 +64,8 @@ def run_fcfs():
     print_results(processes, current_time, cpu_busy_time)
 
 
-# =========================
 # SJF (Non-Preemptive)
-# =========================
+
 def run_sjf():
     print("\n===== SJF Simulation =====")
 
@@ -136,9 +133,8 @@ def run_sjf():
 
     print_results(processes, current_time, cpu_busy_time)
 
-# =========================
 # MLFQ (3-Level)
-# =========================
+
 def run_mlfq():
     print("\n===== MLFQ Simulation =====")
 
@@ -271,9 +267,9 @@ def run_mlfq():
     print_results(processes, current_time, cpu_busy_time)
 
 
-# =========================
+
 # Shared Dynamic Print
-# =========================
+
 def print_dynamic_state(current_time, running, ready_queue, io_list):
     print("\n----------------------------------------")
     print(f"Current Time: {current_time}")
@@ -294,9 +290,8 @@ def print_dynamic_state(current_time, running, ready_queue, io_list):
     print("----------------------------------------")
 
 
-# =========================
 # Final Results
-# =========================
+
 def print_results(processes, total_time, cpu_busy_time):
     print("\n===== FINAL RESULTS =====")
 
